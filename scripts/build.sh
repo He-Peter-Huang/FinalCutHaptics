@@ -10,7 +10,7 @@
 #   FCH_NOTARY_PROFILE="notary-profile-name"                     # notarytool profile → notarize + staple
 set -euo pipefail
 cd "$(dirname "$0")/.."
-VERSION="1.0.1"
+VERSION="1.0.2"
 mkdir -p dist
 
 echo "→ [1/3] Building universal Swift observer (arm64 + x86_64)…"
@@ -28,6 +28,9 @@ if ! dotnet --list-sdks >/dev/null 2>&1 || [ -z "$(dotnet --list-sdks 2>/dev/nul
   echo "ERROR: no .NET SDK found for '$(command -v dotnet)'. Install one (e.g. 'brew install dotnet') and ensure it's first on PATH." >&2
   exit 1
 fi
+# Wipe the prior output so stale leftovers (e.g. a duplicated "eventMapping 2.yaml") can't leak
+# into the package — `dotnet build` does not clean its output directory.
+rm -rf plugin/bin/Release
 dotnet build plugin/FinalCutHaptics/FinalCutHaptics.csproj -c Release -v minimal
 
 echo "→ [3/3] Packaging installer .pkg…"
