@@ -1,0 +1,10 @@
+<Project>
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <!-- Allow building the project directly (no .sln needed): default SolutionDir to this folder. -->
+        <SolutionDir Condition="'$(SolutionDir)'==''">$(MSBuildThisFileDirectory)</SolutionDir>
+        <!-- Forward slashes so the macOS Exec targets (link-file creation) work. -->
+        <BaseIntermediateOutputPath>$(SolutionDir)obj/</BaseIntermediateOutputPath>
+        <BaseOutputPath>$(SolutionDir)bin/</BaseOutputPath>
+    </PropertyGroup>
+</Project>

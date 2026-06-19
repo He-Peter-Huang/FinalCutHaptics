@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# Large download asset is copied from ../dist at build time; the built copy lives in ../docs.
+public/*.pkg

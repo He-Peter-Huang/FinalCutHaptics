@@ -1,0 +1,60 @@
+# ==================================================================================================
+# GENERAL SETTINGS
+# ==================================================================================================
+
+# Package type. Must be plugin4 for plugins.
+type: plugin4
+
+# Name that identifies the plugin.
+name: FinalCutHaptics
+
+# Plugin name that is shown to the user.
+displayName: Final Cut Haptics
+
+# Short description of the plugin.
+description: Delivers a haptic tick on the MX Master 4 each time the Final Cut Pro playhead snaps to a clip edge while snapping (magnet) is on.
+
+# Name of the plugin library file.
+pluginFileName: FinalCutHapticsPlugin.dll
+
+# Plugin version.
+version: 1.0
+
+# Author of the plugin.
+author: He Huang
+
+# Copyright information.
+copyright: Copyright © 2026 He Huang. All rights reserved.
+
+# Links shown on the Marketplace listing.
+homePageUrl: https://he-peter-huang.github.io/FinalCutHaptics/
+supportPageUrl: https://github.com/He-Peter-Huang/FinalCutHaptics/issues
+
+
+# ==================================================================================================
+# PLUGIN PROPERTIES
+# ==================================================================================================
+
+# Location of plugin files on macOS (relative to the plugin base directory).
+pluginFolderMac: bin
+
+# No control-surface devices needed: the MX Master 4 is auto-detected when the
+# HasHapticMapping capability is enabled.
+supportedDevices: []
+
+# List of plugin capabilities.
+pluginCapabilities:
+    # Enable haptic feedback mapping.
+    - HasHapticMapping
+
+# Minimum Loupedeck/Plugin SDK version supported by the plugin.
+# Haptics require 6.2.1+; the installed service is 6.3.1.
+minimumLoupedeckVersion: 6.0
+
+
+# ==================================================================================================
+# LICENSE
+# ==================================================================================================
+
+license: MIT
+licenseUrl: https://opensource.org/licenses/MIT

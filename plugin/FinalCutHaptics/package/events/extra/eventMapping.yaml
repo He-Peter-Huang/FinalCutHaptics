@@ -1,0 +1,11 @@
+# Haptic waveform mappings for Final Cut Pro events.
+# Available waveforms:
+#   Precision: sharp_collision, damp_collision, subtle_collision, damp_state_change
+#   Progress:  sharp_state_change, completed, mad, firework, wave, angry_alert, square, happy_alert
+#   Notify:    knock, ringing, jingle
+
+haptics:
+  # A crisp detent each time the playhead snaps onto a clip edge.
+  snap:
+    DEFAULT: knock
+    MX Master 4: sharp_collision

@@ -1,0 +1,7 @@
+displayName: Final Cut Pro Events
+description: Haptic events triggered by Final Cut Pro timeline actions
+
+events:
+  - name: snap
+    displayName: Timeline Snap
+    description: Triggered when the playhead/skimmer snaps to a clip edge while snapping (magnet) is on

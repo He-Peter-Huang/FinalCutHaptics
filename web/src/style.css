@@ -1,0 +1,67 @@
+:root{
+  --bg:#0a0b0d; --panel:#131519; --panel2:#181b20; --line:#23272e;
+  --text:#e8eaed; --muted:#9aa3ad; --accent:#3ddc97; --accent2:#36c6e0; --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:radial-gradient(1200px 700px at 70% -10%, #11261f 0%, transparent 55%),
+             radial-gradient(900px 600px at 0% 0%, #0e1c24 0%, transparent 50%), var(--bg);
+  color:var(--text);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:980px;margin:0 auto;padding:0 24px}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:24px 0}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.2px}
+.brand img{width:34px;height:34px;border-radius:8px}
+.nav-right{display:flex;align-items:center;gap:22px;color:var(--muted);font-size:14px}
+.nav-right>a:hover{color:var(--text)}
+.lang{display:flex;align-items:center;gap:7px;color:#5a626c}
+.lang button{background:none;border:none;color:var(--muted);font:inherit;font-size:13.5px;cursor:pointer;padding:0}
+.lang button.on{color:var(--accent);font-weight:700}
+.lang button:hover{color:var(--text)}
+
+header.hero{padding:60px 0 40px;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--accent);
+  background:rgba(61,220,151,.08);border:1px solid rgba(61,220,151,.25);padding:6px 14px;border-radius:999px;margin-bottom:26px}
+h1{font-size:clamp(40px,6.4vw,66px);line-height:1.04;letter-spacing:-1.5px;font-weight:800}
+h1 .grad{background:linear-gradient(120deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{margin:22px auto 0;max-width:600px;color:var(--muted);font-size:19px}
+.cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:12px;font-weight:650;font-size:16px;transition:.15s transform,.15s box-shadow;cursor:pointer}
+.btn-primary{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#05130d;box-shadow:0 8px 30px -8px rgba(61,220,151,.5)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 40px -10px rgba(61,220,151,.6)}
+.meta{margin-top:18px;color:var(--muted);font-size:13.5px}
+
+section{padding:44px 0}
+h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.card .ic{font-size:22px;color:var(--accent);margin-bottom:12px}
+.card h3{font-size:17px;margin-bottom:8px}
+.card p{color:var(--muted);font-size:14.5px}
+
+.steps{display:grid;gap:14px;counter-reset:s}
+.step{display:flex;gap:16px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.step::before{counter-increment:s;content:counter(s);flex:0 0 32px;height:32px;border-radius:8px;
+  display:grid;place-items:center;font-weight:700;color:#05130d;background:linear-gradient(120deg,var(--accent),var(--accent2))}
+.step h3{font-size:16px;margin-bottom:3px}
+.step p{color:var(--muted);font-size:14.5px}
+.note{display:flex;gap:12px;align-items:center;background:rgba(54,198,224,.06);border:1px solid rgba(54,198,224,.22);border-radius:12px;padding:15px 18px;color:var(--muted);font-size:14.5px;margin-top:18px}
+
+.features{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.feat{display:flex;gap:11px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14.5px}
+.feat .dot{flex:0 0 8px;height:8px;border-radius:50%;background:var(--accent)}
+
+footer{border-top:1px solid var(--line);margin-top:28px;padding:28px 0 60px;color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+footer .disc{color:#6b727b;max-width:520px;text-align:right}
+
+@media(max-width:720px){
+  .grid,.features{grid-template-columns:1fr}
+  .nav-right>a{display:none}
+  footer{flex-direction:column}
+  footer .disc{text-align:left}
+}

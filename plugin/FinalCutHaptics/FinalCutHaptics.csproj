@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Loupedeck.FinalCutHapticsPlugin</RootNamespace>
+    <!-- Marketplace requires the plugin DLL name to end with 'Plugin'. -->
+    <AssemblyName>FinalCutHapticsPlugin</AssemblyName>
+    <!-- No debug symbols in the shipped package. -->
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!-- Logi Plugin Service install locations (macOS values used here; Windows kept for parity). -->
+    <PluginApiDir Condition="$(OS) == 'Windows_NT'">C:\Program Files\Logi\LogiPluginService\</PluginApiDir>
+    <PluginApiDir Condition="$(OS) != 'Windows_NT'">/Applications/Utilities/LogiPluginService.app/Contents/MonoBundle/</PluginApiDir>
+
+    <PluginDir Condition="$(OS) == 'Windows_NT'">$(LocalAppData)\Logi\LogiPluginService\Plugins\</PluginDir>
+    <PluginDir Condition="$(OS) != 'Windows_NT'">~/Library/Application\ Support/Logi/LogiPluginService/Plugins/</PluginDir>
+
+    <OutputPath>$(BaseOutputPath)$(Configuration)/bin/</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Do NOT copy PluginApi.dll (or its SDK deps) into the package — the Logi service provides
+         them at runtime, and the Marketplace validator rejects shipping the SDK's own API. -->
+    <Reference Include="PluginApi">
+      <HintPath>$(PluginApiDir)PluginApi.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Bundle the prebuilt Swift snap observer next to the plugin DLL so the plugin can launch it. -->
+  <ItemGroup>
+    <None Include="SnapObserver">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Copy the package/ tree (metadata + events) next to the bin output so the service finds it. -->
+  <Target Name="CopyPackage" AfterTargets="PostBuildEvent">
+    <ItemGroup>
+      <PackageFiles Include="package/**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PackageFiles)" DestinationFolder="$(OutputPath)../%(RecursiveDir)" />
+  </Target>
+
+  <!-- Write the .link file so the Logi Plugin Service auto-loads this build output. -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Condition="$(OS) == 'Windows_NT'" Command="echo $(BaseOutputPath)$(Configuration)\ &gt; &quot;$(PluginDir)$(ProjectName).link&quot;" />
+    <Exec Condition="$(OS) != 'Windows_NT'" Command="echo $(BaseOutputPath)$(Configuration)/ &gt; $(PluginDir)$(ProjectName).link" />
+  </Target>
+
+  <Target Name="PluginClean" AfterTargets="CoreClean">
+    <Delete Condition="$(OS) == 'Windows_NT'" Files="$(PluginDir)$(ProjectName).link" />
+    <Exec Condition="$(OS) != 'Windows_NT'" Command="rm -f $(PluginDir)$(ProjectName).link" />
+    <RemoveDir Directories="$(OutputPath)../" />
+  </Target>
+
+</Project>

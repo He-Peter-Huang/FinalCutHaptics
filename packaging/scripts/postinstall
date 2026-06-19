@@ -1,0 +1,24 @@
+#!/bin/bash
+# Installs the FinalCutHaptics plugin into the logged-in user's Logi plugin folder.
+# Runs as root, so resolve the real console user and write into THEIR home.
+set -e
+
+USER_NAME="$(stat -f%Su /dev/console)"
+USER_HOME="$(dscl . -read /Users/"$USER_NAME" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+[ -n "$USER_HOME" ] || USER_HOME="/Users/$USER_NAME"
+
+STAGING="/usr/local/share/FinalCutHaptics/staging"
+PLUGINS="$USER_HOME/Library/Application Support/Logi/LogiPluginService/Plugins"
+DEST="$PLUGINS/FinalCutHaptics"
+
+mkdir -p "$DEST"
+rm -f "$PLUGINS/FinalCutHaptics.link"          # drop any prior dev symlink
+ditto "$STAGING" "$DEST"                         # preserves the SnapObserver code signature
+chmod +x "$DEST/bin/SnapObserver" 2>/dev/null || true
+chown -R "$USER_NAME":staff "$DEST"
+
+# Best-effort live reload + cleanup of the staged payload.
+sudo -u "$USER_NAME" open "loupedeck://plugin/FinalCutHaptics/reload" 2>/dev/null || true
+rm -rf "/usr/local/share/FinalCutHaptics"
+
+exit 0
