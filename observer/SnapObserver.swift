@@ -55,9 +55,25 @@ final class UDP {
 }
 
 // ---------- locate FCP ----------
+// Find the LIVE Final Cut Pro process. We must NOT use NSWorkspace.shared.runningApplications:
+// that array is a cache refreshed by the MAIN run loop, and this tool blocks the main thread in a
+// tight polling loop that never spins the run loop — so the cache freezes at launch. After the user
+// quits & relaunches FCP we'd keep handing back the ORIGINAL (now-dead) pid and never re-latch.
+// NSRunningApplication.runningApplications(withBundleIdentifier:) does a fresh Launch Services
+// query on every call, so it reflects the current process regardless of the run loop.
+func findFCPApp() -> NSRunningApplication? {
+    NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.FinalCut").first { !$0.isTerminated }
+}
 func findFCP() -> AXUIElement? {
-    guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.FinalCut" }) else { return nil }
-    return AXUIElementCreateApplication(app.processIdentifier)
+    guard let a = findFCPApp() else { return nil }
+    return AXUIElementCreateApplication(a.processIdentifier)
+}
+// Kernel-truth liveness for the pid we've latched — independent of any AX-element or Launch Services
+// caching. Returns false once that exact process exits, which is how we notice an FCP restart.
+func pidAlive(_ pid: pid_t) -> Bool {
+    if pid <= 0 { return false }
+    if kill(pid, 0) == 0 { return true }
+    return errno == EPERM   // exists but owned by another user (not expected for FCP)
 }
 
 // ---------- wait for FCP + REAL Accessibility access ----------
@@ -77,15 +93,17 @@ func openAccessibilitySettings() {
 }
 
 var app: AXUIElement
+var fcpPID: pid_t = -1
 var openedSettings = false
 var loggedWaitFCP = false
 var lastNudge = -1.0e9
 while true {
-    guard let candidate = findFCP() else {
+    guard let candidate = findFCPApp() else {
         if !loggedWaitFCP { print("⏳ Waiting for Final Cut Pro to launch…"); loggedWaitFCP = true }
         Thread.sleep(forTimeInterval: 1.0); continue
     }
-    if canReadFCP(candidate) { app = candidate; break }   // FCP running AND readable → proceed
+    let axApp = AXUIElementCreateApplication(candidate.processIdentifier)
+    if canReadFCP(axApp) { app = axApp; fcpPID = candidate.processIdentifier; break }   // FCP running AND readable → proceed
     // FCP is running but unreadable → Accessibility not granted to this helper's responsible process.
     let now = ProcessInfo.processInfo.systemUptime
     if now - lastNudge > 10 {
@@ -168,6 +186,7 @@ Thread.detachNewThread {
     var lastMouse = CGPoint(x: -1, y: -1)
     var lastMove = 0.0
     var round = 0
+    var threadPID = fcpPID
     while true {
         let nowU = ProcessInfo.processInfo.systemUptime
         let m = CGEvent(source: nil)?.location ?? .zero
@@ -176,7 +195,13 @@ Thread.detachNewThread {
             Thread.sleep(forTimeInterval: 0.1)
             continue
         }
-        if let a = findFCP() {
+        if let liveApp = findFCPApp() {
+            // FCP was restarted → the previous project's edge timecodes are meaningless; drop them.
+            if liveApp.processIdentifier != threadPID {
+                threadPID = liveApp.processIdentifier
+                edgeLock.lock(); accumEdges.removeAll(); sharedEdgeKeys = []; edgeLock.unlock()
+            }
+            let a = AXUIElementCreateApplication(liveApp.processIdentifier)
             let fresh = Set(edgeKeysOf(collectTimelineEdges(a)))
             if !fresh.isEmpty {
                 round += 1
@@ -211,9 +236,25 @@ var lastSnapPrint = -1
 let minGapSec = 0.040   // ~25 ticks/s
 var lastSend = 0.0
 var loopStamp = 0.0
+var lastLiveCheck = 0.0
 
 while true {
     tick += 1
+
+    // Detect an FCP restart (or exit) ~2 Hz using kernel-truth liveness, independent of any AX or
+    // Launch Services caching. When the pid we latched dies, re-acquire the NEW process and reset
+    // everything bound to the old one. Without this the observer stays bound to the first pid it
+    // saw and goes permanently silent the moment FCP is relaunched.
+    let nowLive = ProcessInfo.processInfo.systemUptime
+    if nowLive - lastLiveCheck > 0.5 {
+        lastLiveCheck = nowLive
+        if !pidAlive(fcpPID), let live = findFCPApp() {
+            app = AXUIElementCreateApplication(live.processIdentifier)
+            fcpPID = live.processIdentifier
+            posEl = nil; snapBox = nil; prevKey = nil   // drop element refs bound to the dead pid
+            print("🔄 Final Cut Pro restarted (pid \(fcpPID)) — re-acquired.")
+        }
+    }
 
     // Refresh snapping state ~20 Hz; re-find control if it went stale.
     if tick % 12 == 0 || snapBox == nil {
@@ -276,7 +317,11 @@ while true {
 
     // If FCP quit, try to recover.
     if posEl == nil && snapBox == nil {
-        if let a = findFCP() { app = a } else { print("… waiting for Final Cut Pro …") }
+        if let live = findFCPApp() {
+            app = AXUIElementCreateApplication(live.processIdentifier)
+            fcpPID = live.processIdentifier
+        } else { print("… waiting for Final Cut Pro …") }
+        prevKey = nil
         usleep(500_000)
         posEl = findPositionReadout(); snapBox = findSnapCheckbox()
         continue
