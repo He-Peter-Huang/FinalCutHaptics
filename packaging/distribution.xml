@@ -11,5 +11,5 @@
     <choice id="default" title="FinalCutHaptics">
         <pkg-ref id="com.finalcuthaptics.plugin"/>
     </choice>
-    <pkg-ref id="com.finalcuthaptics.plugin" version="1.0.2" onConclusion="none">FinalCutHaptics-component.pkg</pkg-ref>
+    <pkg-ref id="com.finalcuthaptics.plugin" version="1.0.3" onConclusion="none">FinalCutHaptics-component.pkg</pkg-ref>
 </installer-gui-script>

@@ -56,7 +56,7 @@ scripts/build.sh
 ```
 
 This compiles the universal Swift observer, builds the C# plugin (which bundles the observer), and
-produces `dist/FinalCutHaptics-1.0.2.pkg` (unsigned by default).
+produces `dist/FinalCutHaptics-1.0.3.pkg` (unsigned by default).
 
 To sign & notarize (Apple Developer ID required), set:
 

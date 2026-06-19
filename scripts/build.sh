@@ -10,7 +10,7 @@
 #   FCH_NOTARY_PROFILE="notary-profile-name"                     # notarytool profile → notarize + staple
 set -euo pipefail
 cd "$(dirname "$0")/.."
-VERSION="1.0.2"
+VERSION="1.0.3"
 mkdir -p dist
 
 echo "→ [1/3] Building universal Swift observer (arm64 + x86_64)…"
