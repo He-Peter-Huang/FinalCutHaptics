@@ -18,7 +18,7 @@ description: Delivers a haptic tick on the MX Master 4 each time the Final Cut P
 pluginFileName: FinalCutHapticsPlugin.dll
 
 # Plugin version.
-version: 1.0
+version: 1.0.1
 
 # Author of the plugin.
 author: He Huang

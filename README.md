@@ -87,9 +87,19 @@ Download the signed installer from the
 [**latest release**](https://github.com/He-Peter-Huang/FinalCutHaptics/releases/latest) (or the
 [website](https://he-peter-huang.github.io/FinalCutHaptics/)) and open it.
 
-On first run, macOS asks for **Accessibility permission** (needed to read Final Cut Pro) — grant it
-under System Settings ▸ Privacy & Security ▸ Accessibility. Then open a project, press **N** to turn
-snapping on, and scrub.
+### Grant Accessibility (one time)
+
+The observer runs inside **Logi Options+** (`LogiPluginService`), so macOS attributes its
+Accessibility permission to that host process — not to a separate "FinalCutHaptics" app. With Final
+Cut Pro open, the observer opens **System Settings ▸ Privacy & Security ▸ Accessibility** for you
+when it can't read FCP; turn on the entry for **LogiPluginService** (it may also appear as **Logi
+Options+** or **SnapObserver**). If you don't see it, click **+** and add
+`/Applications/Utilities/LogiPluginService.app`.
+
+> macOS often *doesn't* pop a new permission prompt here, because Logi Options+ may already have a
+> (disabled) Accessibility entry — so you have to enable it manually the first time.
+
+Then open a project, press **N** to turn snapping on, and scrub.
 
 ## Development
 

@@ -10,7 +10,7 @@
 #   FCH_NOTARY_PROFILE="notary-profile-name"                     # notarytool profile → notarize + staple
 set -euo pipefail
 cd "$(dirname "$0")/.."
-VERSION="1.0"
+VERSION="1.0.1"
 mkdir -p dist
 
 echo "→ [1/3] Building universal Swift observer (arm64 + x86_64)…"
@@ -23,7 +23,12 @@ if [ -n "${FCH_SIGN_APP:-}" ]; then
 fi
 
 echo "→ [2/3] Building C# plugin (.NET Release)…"
-dotnet build plugin/FinalCutHaptics/FinalCutHaptics.csproj -c Release | grep -E "Build succeeded|error" || true
+# Need a .NET *SDK*, not just a runtime. Fail loudly if one isn't resolvable.
+if ! dotnet --list-sdks >/dev/null 2>&1 || [ -z "$(dotnet --list-sdks 2>/dev/null)" ]; then
+  echo "ERROR: no .NET SDK found for '$(command -v dotnet)'. Install one (e.g. 'brew install dotnet') and ensure it's first on PATH." >&2
+  exit 1
+fi
+dotnet build plugin/FinalCutHaptics/FinalCutHaptics.csproj -c Release -v minimal
 
 echo "→ [3/3] Packaging installer .pkg…"
 SRC="plugin/bin/Release"
@@ -51,3 +56,10 @@ else
   echo "   built UNSIGNED (set FCH_SIGN_INSTALLER + FCH_NOTARY_PROFILE to sign/notarize)"
 fi
 echo "✅ Built $OUT"
+
+echo "→ [bonus] Packaging Marketplace .lplug4…"
+# A .lplug4 is just a zip of the plugin tree (metadata/ + events/ + bin/, with the signed observer).
+LPLUG="$(pwd)/dist/FinalCutHaptics_${VERSION//./_}.lplug4"
+rm -f "$LPLUG"
+( cd "$SRC" && zip -r -X "$LPLUG" metadata events bin >/dev/null )
+echo "✅ Built $LPLUG"

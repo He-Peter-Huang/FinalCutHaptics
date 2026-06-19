@@ -54,26 +54,52 @@ final class UDP {
     }
 }
 
-// ---------- wait for Accessibility permission ----------
-// Run as a managed agent: instead of exiting when not yet trusted, pop the system prompt once and
-// wait until the user grants permission — then continue without needing a restart.
-if !AXIsProcessTrusted() {
-    print("⏳ Waiting for Accessibility permission (System Settings ▸ Privacy & Security ▸ Accessibility)…")
-    let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-    _ = AXIsProcessTrustedWithOptions(opts)
-    while !AXIsProcessTrusted() { Thread.sleep(forTimeInterval: 1.0) }
-    print("✅ Accessibility granted.")
-}
-
-// ---------- locate FCP (wait for it to be running) ----------
+// ---------- locate FCP ----------
 func findFCP() -> AXUIElement? {
     guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.FinalCut" }) else { return nil }
     return AXUIElementCreateApplication(app.processIdentifier)
 }
-var appOpt = findFCP()
-if appOpt == nil { print("⏳ Waiting for Final Cut Pro to launch…") }
-while appOpt == nil { Thread.sleep(forTimeInterval: 1.0); appOpt = findFCP() }
-var app = appOpt!
+
+// ---------- wait for FCP + REAL Accessibility access ----------
+// AXIsProcessTrusted() is unreliable for a helper spawned by the Logi service: it can report
+// "trusted" via the parent process while our reads are actually blocked (so the observer runs but
+// reads nothing, and the user never sees a prompt). Instead, verify access by actually READING
+// FCP's window tree. When FCP is running but unreadable, Accessibility hasn't been granted to the
+// process responsible for this helper — open the settings pane and tell the user what to enable,
+// then keep retrying until access works (no restart needed).
+func canReadFCP(_ app: AXUIElement) -> Bool { !kids(app).isEmpty }
+
+func openAccessibilitySettings() {
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+    p.arguments = ["x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"]
+    try? p.run()
+}
+
+var app: AXUIElement
+var openedSettings = false
+var loggedWaitFCP = false
+var lastNudge = -1.0e9
+while true {
+    guard let candidate = findFCP() else {
+        if !loggedWaitFCP { print("⏳ Waiting for Final Cut Pro to launch…"); loggedWaitFCP = true }
+        Thread.sleep(forTimeInterval: 1.0); continue
+    }
+    if canReadFCP(candidate) { app = candidate; break }   // FCP running AND readable → proceed
+    // FCP is running but unreadable → Accessibility not granted to this helper's responsible process.
+    let now = ProcessInfo.processInfo.systemUptime
+    if now - lastNudge > 10 {
+        print("⚠️ Accessibility permission needed. Enable Final Cut Haptics in")
+        print("   System Settings ▸ Privacy & Security ▸ Accessibility")
+        print("   (look for \"LogiPluginService\", \"Logi Options+\", or \"SnapObserver\" and turn it on).")
+        let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        _ = AXIsProcessTrustedWithOptions(opts)            // registers the entry / may surface a prompt
+        if !openedSettings { openAccessibilitySettings(); openedSettings = true }  // open the pane once
+        lastNudge = now
+    }
+    Thread.sleep(forTimeInterval: 1.0)
+}
+print("✅ Final Cut Pro is readable — snap detection active.")
 
 // ---------- element finders ----------
 func find(_ root: AXUIElement, depth: Int = 0, _ match: (AXUIElement) -> Bool) -> AXUIElement? {
