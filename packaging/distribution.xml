@@ -3,12 +3,13 @@
     <title>FinalCutHaptics</title>
     <organization>com.finalcuthaptics</organization>
     <options customize="never" require-scripts="false" hostArchitectures="arm64,x86_64"/>
-    <!-- Reboot the machine once the install finishes. -->
+    <!-- No restart needed: the postinstall hot-reloads the plugin via the loupedeck:// URL scheme,
+         and the observer re-latches Final Cut Pro on its own (fixed in 1.0.2). -->
     <choices-outline>
         <line choice="default"/>
     </choices-outline>
     <choice id="default" title="FinalCutHaptics">
         <pkg-ref id="com.finalcuthaptics.plugin"/>
     </choice>
-    <pkg-ref id="com.finalcuthaptics.plugin" version="1.0.2" onConclusion="RequireRestart">FinalCutHaptics-component.pkg</pkg-ref>
+    <pkg-ref id="com.finalcuthaptics.plugin" version="1.0.2" onConclusion="none">FinalCutHaptics-component.pkg</pkg-ref>
 </installer-gui-script>
